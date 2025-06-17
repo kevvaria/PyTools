@@ -7,7 +7,7 @@ from tkinterdnd2 import DND_FILES, TkinterDnD
 class PDFApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("PDF Operations")
+        self.root.title("Accutive Security PDF Merge Tool")
         self.root.geometry("600x400")
         
         # Configure style
@@ -19,9 +19,24 @@ class PDFApp:
         self.main_frame = ttk.Frame(root, padding="10")
         self.main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
+        # Selection mode frame
+        self.mode_frame = ttk.Frame(self.main_frame)
+        self.mode_frame.grid(row=0, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
+        
+        self.selection_mode = tk.StringVar(value="manual")
+        self.manual_radio = ttk.Radiobutton(self.mode_frame, text="Browse Target Directory", 
+                                          variable=self.selection_mode, value="manual",
+                                          command=self.update_selection_mode)
+        self.manual_radio.grid(row=0, column=0, padx=10)
+        
+        self.drag_radio = ttk.Radiobutton(self.mode_frame, text="Drag and Drop PDF Files", 
+                                        variable=self.selection_mode, value="drag",
+                                        command=self.update_selection_mode)
+        self.drag_radio.grid(row=0, column=1, padx=10)
+        
         # Directory selection
         self.dir_frame = ttk.LabelFrame(self.main_frame, text="Directory Selection", padding="5")
-        self.dir_frame.grid(row=0, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
+        self.dir_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
         
         self.dir_path = tk.StringVar()
         self.dir_entry = ttk.Entry(self.dir_frame, textvariable=self.dir_path, width=50)
@@ -33,9 +48,10 @@ class PDFApp:
         # Drop zone
         self.drop_frame = ttk.LabelFrame(self.main_frame, text="Drop PDF Files Here", padding="5")
         self.drop_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+        self.drop_frame.grid_remove()  # Hide drop zone initially
         
-        self.drop_label = ttk.Label(self.drop_frame, text="Drag and drop PDF files here\nor use the Browse button above")
-        self.drop_label.grid(row=0, column=0, padx=20, pady=20)
+        self.drop_label = ttk.Label(self.drop_frame, text="Drag and drop PDF files here")
+        self.drop_label.grid(row=0, column=0, padx=20, pady=40)
         
         # Configure drop zone for drag and drop
         self.drop_frame.drop_target_register(DND_FILES)
@@ -45,7 +61,7 @@ class PDFApp:
         self.list_frame = ttk.LabelFrame(self.main_frame, text="PDF Files", padding="5")
         self.list_frame.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
         
-        self.pdf_listbox = tk.Listbox(self.list_frame, height=10, width=70)
+        self.pdf_listbox = tk.Listbox(self.list_frame, height=8)
         self.pdf_listbox.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
         # Scrollbar for listbox
@@ -63,6 +79,9 @@ class PDFApp:
         self.merge_btn = ttk.Button(self.button_frame, text="Merge PDFs", command=self.merge_pdfs)
         self.merge_btn.grid(row=0, column=1, padx=5)
         
+        self.clear_btn = ttk.Button(self.button_frame, text="Clear", command=self.clear_selection)
+        self.clear_btn.grid(row=0, column=2, padx=5)
+        
         # Status bar
         self.status_var = tk.StringVar()
         self.status_var.set("Ready")
@@ -73,6 +92,7 @@ class PDFApp:
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
         self.main_frame.columnconfigure(0, weight=1)
+        self.main_frame.rowconfigure(1, weight=2)
         self.main_frame.rowconfigure(2, weight=1)
         self.list_frame.columnconfigure(0, weight=1)
         self.list_frame.rowconfigure(0, weight=1)
@@ -159,6 +179,24 @@ class PDFApp:
         else:
             self.status_var.set("Failed to merge PDFs")
             messagebox.showerror("Error", "Failed to merge PDFs")
+
+    def update_selection_mode(self):
+        """Update the visibility of directory and drop zone based on selection mode"""
+        if self.selection_mode.get() == "manual":
+            self.dir_frame.grid()
+            self.drop_frame.grid_remove()
+        else:
+            self.dir_frame.grid_remove()
+            self.drop_frame.grid()
+            
+        # Clear the current selection when switching modes
+        self.clear_selection()
+
+    def clear_selection(self):
+        """Clear the directory path and PDF list"""
+        self.dir_path.set("")
+        self.pdf_listbox.delete(0, tk.END)
+        self.status_var.set("Ready")
 
 if __name__ == "__main__":
     root = TkinterDnD.Tk()
